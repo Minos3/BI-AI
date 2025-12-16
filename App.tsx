@@ -5,7 +5,7 @@ import {
 } from 'recharts';
 import { GoogleGenAI, Chat, GenerateContentResponse } from "@google/genai";
 import { createChatSession, sendMessageStream } from './services/geminiService';
-import { SearchIcon, BellIcon, SendIcon, UploadIcon, TrendingUpIcon, TrendingDownIcon, BotIcon, CalendarIcon } from './components/Icons';
+import { SearchIcon, BellIcon, SendIcon, UploadIcon, TrendingUpIcon, TrendingDownIcon, BotIcon, CalendarIcon, ClearIcon } from './components/Icons';
 import { Product, ChatMessage } from './types';
 
 // --- MOCK DATA GENERATORS ---
@@ -243,6 +243,17 @@ const SectionHeader = ({ title, filters = ['今日', '本周', '本月'], onDate
     if (onDateChange) onDateChange();
   };
 
+  // Safe wrapper for showPicker
+  const handleShowPicker = (e: React.MouseEvent<HTMLInputElement>) => {
+    try {
+      if (typeof e.currentTarget.showPicker === 'function') {
+        e.currentTarget.showPicker();
+      }
+    } catch (error) {
+      console.warn("showPicker not supported or blocked", error);
+    }
+  };
+
   return (
     <div className="flex items-center justify-between mb-4">
       <h2 className="text-lg font-bold text-slate-800 truncate mr-2">{title}</h2>
@@ -259,7 +270,7 @@ const SectionHeader = ({ title, filters = ['今日', '本周', '本月'], onDate
                type="date" 
                value={startDate}
                onChange={(e) => handleDateChange('start', e.target.value)}
-               onClick={(e) => e.currentTarget.showPicker()}
+               onClick={handleShowPicker}
                style={{ colorScheme: 'light' }}
                className="bg-transparent border-none outline-none text-slate-600 p-0 cursor-pointer font-medium w-[79px] text-[11px]"
              />
@@ -268,7 +279,7 @@ const SectionHeader = ({ title, filters = ['今日', '本周', '本月'], onDate
                type="date" 
                value={endDate}
                onChange={(e) => handleDateChange('end', e.target.value)}
-               onClick={(e) => e.currentTarget.showPicker()}
+               onClick={handleShowPicker}
                style={{ colorScheme: 'light' }}
                className="bg-transparent border-none outline-none text-slate-600 p-0 cursor-pointer font-medium w-[79px] text-[11px]"
              />
@@ -476,34 +487,52 @@ const RefundAnalysis = () => {
 
   const pagedProducts = products.slice((page - 1) * pageSize, page * pageSize);
 
+  // Derive specialized datasets for the sparklines to match the context values roughly
+  const refundAmountData = chartData.map(d => ({ ...d, today: Math.floor(d.today * 0.5) })); // approx 6000
+  const refundCountData = chartData.map(d => ({ ...d, today: Math.floor(d.today * 0.0035) })); // approx 40
+
   return (
     <div className="bg-white p-6 rounded-2xl shadow-sm border border-slate-100 mb-6">
       <SectionHeader title="售后与退款分析" onDateChange={handleDataRefresh} />
       <div className="grid grid-cols-1 md:grid-cols-2 gap-4 mb-6">
-         <div className="p-4 bg-slate-50 rounded-xl relative overflow-hidden">
+         <div className="p-4 bg-slate-50 rounded-xl relative overflow-hidden group">
             <div className="relative z-10">
               <div className="text-sm text-slate-500">今日退款金额</div>
               <div className="text-2xl font-bold mt-1">¥ 6,165</div>
               <div className="flex gap-2 text-xs mt-2"><span className="text-green-600">▲ 12%</span> 较昨日</div>
             </div>
-            <div className="absolute right-0 bottom-0 w-1/2 h-16 opacity-50">
+            <div className="absolute right-0 bottom-0 w-1/2 h-16">
                <ResponsiveContainer width="100%" height="100%">
-                 <AreaChart data={chartData}>
-                   <Area type="monotone" dataKey="today" stroke="#8b5cf6" fill="#c4b5fd" />
+                 <AreaChart data={refundAmountData}>
+                    <Tooltip 
+                      contentStyle={{ borderRadius: '6px', border: 'none', boxShadow: '0 4px 6px -1px rgb(0 0 0 / 0.1)', padding: '4px 8px', fontSize: '12px' }}
+                      labelStyle={{ color: '#64748b', marginBottom: '2px', fontSize: '10px' }}
+                      itemStyle={{ color: '#8b5cf6', fontWeight: 'bold' }}
+                      formatter={(value) => [`¥${value}`, '金额']}
+                      separator=""
+                    />
+                    <Area type="monotone" dataKey="today" stroke="#8b5cf6" strokeOpacity={0.6} fill="#c4b5fd" fillOpacity={0.4} strokeWidth={2} />
                  </AreaChart>
                </ResponsiveContainer>
             </div>
          </div>
-         <div className="p-4 bg-slate-50 rounded-xl relative overflow-hidden">
+         <div className="p-4 bg-slate-50 rounded-xl relative overflow-hidden group">
             <div className="relative z-10">
               <div className="text-sm text-slate-500">今日退款单数</div>
               <div className="text-2xl font-bold mt-1">42单</div>
               <div className="flex gap-2 text-xs mt-2"><span className="text-green-600">▲ 5%</span> 较昨日</div>
             </div>
-            <div className="absolute right-0 bottom-0 w-1/2 h-16 opacity-50">
+            <div className="absolute right-0 bottom-0 w-1/2 h-16">
                <ResponsiveContainer width="100%" height="100%">
-                 <AreaChart data={chartData}>
-                   <Area type="monotone" dataKey="today" stroke="#8b5cf6" fill="#c4b5fd" />
+                 <AreaChart data={refundCountData}>
+                    <Tooltip 
+                      contentStyle={{ borderRadius: '6px', border: 'none', boxShadow: '0 4px 6px -1px rgb(0 0 0 / 0.1)', padding: '4px 8px', fontSize: '12px' }}
+                      labelStyle={{ color: '#64748b', marginBottom: '2px', fontSize: '10px' }}
+                      itemStyle={{ color: '#8b5cf6', fontWeight: 'bold' }}
+                      formatter={(value) => [`${value}单`, '单数']}
+                      separator=""
+                    />
+                    <Area type="monotone" dataKey="today" stroke="#8b5cf6" strokeOpacity={0.6} fill="#c4b5fd" fillOpacity={0.4} strokeWidth={2} />
                  </AreaChart>
                </ResponsiveContainer>
             </div>
@@ -562,11 +591,13 @@ const AIAgent = () => {
   const [isLoading, setIsLoading] = useState(false);
   const messagesEndRef = useRef<HTMLDivElement>(null);
   const chatSessionRef = useRef<Chat | null>(null);
+  const MAX_CHARS = 2000;
 
   // Initialize Chat Session
   useEffect(() => {
     try {
-      if (!process.env.API_KEY) {
+      const apiKey = typeof process !== 'undefined' ? process.env?.API_KEY : undefined;
+      if (!apiKey) {
         console.error("API_KEY is missing!");
         setMessages([{
             id: 'error',
@@ -723,9 +754,10 @@ const AIAgent = () => {
          
         <div className="relative">
           <textarea
-            className="w-full bg-slate-50 border border-slate-200 rounded-xl pl-4 pr-12 py-3 text-sm focus:outline-none focus:ring-2 focus:ring-brand-500 resize-none"
+            className="w-full bg-slate-50 border border-slate-200 rounded-xl pl-4 pr-28 pt-3 pb-10 text-sm focus:outline-none focus:ring-2 focus:ring-brand-500 resize-none"
             rows={2}
             placeholder="向AI询问数据分析问题..."
+            maxLength={MAX_CHARS}
             value={inputText}
             onChange={(e) => setInputText(e.target.value)}
             onKeyDown={(e) => {
@@ -735,8 +767,22 @@ const AIAgent = () => {
               }
             }}
           />
-          <div className="absolute right-2 bottom-2 flex gap-1">
-             <button className="p-2 text-slate-400 hover:text-brand-600 transition-colors">
+          
+          <div className="absolute left-4 bottom-3 text-xs text-slate-400 font-medium select-none">
+            {inputText.length} <span className="text-slate-300">/</span> {MAX_CHARS}
+          </div>
+
+          <div className="absolute right-2 bottom-2 flex gap-1 items-center">
+             {inputText.length > 0 && (
+                <button 
+                  onClick={() => setInputText('')}
+                  className="p-2 text-slate-400 hover:text-red-500 transition-colors rounded-lg hover:bg-slate-100"
+                  title="清空输入"
+                >
+                  <ClearIcon />
+                </button>
+             )}
+             <button className="p-2 text-slate-400 hover:text-brand-600 transition-colors rounded-lg hover:bg-slate-100">
                <UploadIcon />
              </button>
              <button 
