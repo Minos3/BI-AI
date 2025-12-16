@@ -31,41 +31,52 @@ const getRandomProduct = (index: number): Product => ({
 
 const generateProductList = (count: number) => Array.from({ length: count }).map((_, i) => getRandomProduct(i));
 
-// Static / Semi-static Data for Charts
-
-const OVERVIEW_DATA = [
-  { time: '00:00', today: 10, yesterday: 8 },
-  { time: '04:00', today: 15, yesterday: 12 },
-  { time: '08:00', today: 35, yesterday: 20 },
-  { time: '12:00', today: 80, yesterday: 65 },
-  { time: '16:00', today: 110, yesterday: 90 },
-  { time: '20:00', today: 130, yesterday: 120 },
-  { time: '23:59', today: 140, yesterday: 124 },
-];
-
-const CATEGORY_DATA = [
-  { name: '粮油调味', value: 13000 },
-  { name: '美妆护肤', value: 9000 },
-  { name: '休闲零食', value: 7500 },
-  { name: '生鲜水果', value: 9500 },
-  { name: '乳饮酒水', value: 7000 },
-  { name: '家居清洁', value: 6500 },
-  { name: '母婴用品', value: 5000 },
-];
+const generateOverviewData = (metricType: number = 0) => {
+  const times = ['00:00', '04:00', '08:00', '12:00', '16:00', '20:00', '23:59'];
+  return times.map((time, i) => {
+    let today = 0, yesterday = 0;
+    
+    // Simulate different data patterns based on metric type
+    if (metricType === 0) { // GMV: Accumulating, large numbers
+       const base = (i + 1) * 10000;
+       today = base + Math.random() * 2000; 
+       yesterday = base * 0.9 + Math.random() * 2000;
+    } else if (metricType === 1) { // UV: Accumulating, medium numbers
+       const base = (i + 1) * 800;
+       today = base + Math.random() * 100;
+       yesterday = base * 0.85 + Math.random() * 100;
+    } else if (metricType === 2) { // Paid Buyers: Accumulating, small numbers
+       const base = (i + 1) * 100;
+       today = base + Math.random() * 20;
+       yesterday = base * 0.9 + Math.random() * 20;
+    } else if (metricType === 3) { // Conversion Rate: Fluctuating Percentage (10-15%)
+       today = 12 + Math.random() * 3;
+       yesterday = 11 + Math.random() * 3;
+    } else { // Refund Rate: Fluctuating Percentage (2-5%)
+       today = 2 + Math.random() * 1.5;
+       yesterday = 2.5 + Math.random() * 1.5;
+    }
+    
+    // Formatting
+    if (metricType > 2) {
+       today = parseFloat(today.toFixed(2));
+       yesterday = parseFloat(yesterday.toFixed(2));
+    } else {
+       today = Math.floor(today);
+       yesterday = Math.floor(yesterday);
+    }
+    
+    return { time, today, yesterday };
+  });
+};
 
 const getSubCategoryData = (index: number) => {
    const map = [
-      // 0: 粮油调味
       [{name:'食用油', value: 8500}, {name:'大米杂粮', value: 6200}, {name:'厨房调味', value: 4500}, {name:'面粉面条', value: 3200}, {name:'方便食品', value: 2100}],
-      // 1: 生鲜水果
       [{name:'热带水果', value: 7800}, {name:'苹果/梨', value: 5600}, {name:'柑橘橙柚', value: 4200}, {name:'奇异果/莓', value: 3100}, {name:'车厘子', value: 2800}],
-      // 2: 休闲零食
       [{name:'坚果炒货', value: 6500}, {name:'肉干肉脯', value: 5200}, {name:'饼干蛋糕', value: 4100}, {name:'膨化食品', value: 3300}, {name:'糖巧', value: 2400}],
-      // 3: 肉禽蛋品
       [{name:'牛肉', value: 5900}, {name:'羊肉', value: 4800}, {name:'猪肉', value: 4200}, {name:'禽肉', value: 3500}, {name:'蛋类', value: 3100}],
-      // 4: 乳饮酒水
       [{name:'纯牛奶', value: 6800}, {name:'酸奶', value: 5400}, {name:'饮用水', value: 4500}, {name:'果汁', value: 3200}, {name:'啤酒', value: 2100}],
-      // 5: 速冻食品
       [{name:'水饺/馄饨', value: 4200}, {name:'中式面点', value: 3800}, {name:'火锅丸料', value: 3100}, {name:'速冻半成品', value: 2500}, {name:'汤圆/元宵', value: 1800}],
    ];
    return map[index] || map[0];
@@ -78,63 +89,51 @@ const REFUND_REASONS = [
   { name: '不喜欢/拍错', value: 15, fill: '#10b981' },
 ];
 
-// Channel Specific Data with Trend Data
-const CHANNEL_DATA = {
+// Channel Specific Data Generator
+const generateChannelData = () => ({
   wechat: {
     funnel: [
-      { value: 8846, name: '访客数 (UV)', fill: '#3b82f6' },
-      { value: 3846, name: '加购人数', fill: '#10b981' },
-      { value: 2146, name: '提交订单', fill: '#fbbf24' },
-      { value: 1846, name: '支付成功', fill: '#60a5fa' },
+      { value: Math.floor(Math.random() * 2000) + 7000, name: '访客数 (UV)', fill: '#3b82f6' },
+      { value: Math.floor(Math.random() * 1000) + 3000, name: '加购人数', fill: '#10b981' },
+      { value: Math.floor(Math.random() * 500) + 1500, name: '提交订单', fill: '#fbbf24' },
+      { value: Math.floor(Math.random() * 300) + 1200, name: '支付成功', fill: '#60a5fa' },
     ],
-    trend: [
-      { time: 'Mon', click: 1200, pay: 300 },
-      { time: 'Tue', click: 1400, pay: 450 },
-      { time: 'Wed', click: 1100, pay: 280 },
-      { time: 'Thu', click: 1600, pay: 500 },
-      { time: 'Fri', click: 1800, pay: 600 },
-      { time: 'Sat', click: 2200, pay: 800 },
-      { time: 'Sun', click: 2000, pay: 750 },
-    ],
-    products: generateProductList(25) // Increased to show more pages
+    trend: Array.from({length: 7}, (_, i) => ({
+       time: ['Mon', 'Tue', 'Wed', 'Thu', 'Fri', 'Sat', 'Sun'][i],
+       click: Math.floor(Math.random() * 1000) + 1000,
+       pay: Math.floor(Math.random() * 500) + 200
+    })),
+    products: generateProductList(25)
   },
   community: {
     funnel: [
-      { value: 5200, name: '访客数 (UV)', fill: '#3b82f6' },
-      { value: 2800, name: '加购人数', fill: '#10b981' },
-      { value: 1900, name: '提交订单', fill: '#fbbf24' },
-      { value: 1600, name: '支付成功', fill: '#60a5fa' },
+      { value: Math.floor(Math.random() * 1000) + 4000, name: '访客数 (UV)', fill: '#3b82f6' },
+      { value: Math.floor(Math.random() * 800) + 2000, name: '加购人数', fill: '#10b981' },
+      { value: Math.floor(Math.random() * 400) + 1000, name: '提交订单', fill: '#fbbf24' },
+      { value: Math.floor(Math.random() * 300) + 800, name: '支付成功', fill: '#60a5fa' },
     ],
-    trend: [
-      { time: 'Mon', click: 800, pay: 200 },
-      { time: 'Tue', click: 900, pay: 250 },
-      { time: 'Wed', click: 850, pay: 220 },
-      { time: 'Thu', click: 1100, pay: 300 },
-      { time: 'Fri', click: 1300, pay: 400 },
-      { time: 'Sat', click: 1500, pay: 500 },
-      { time: 'Sun', click: 1400, pay: 480 },
-    ],
+    trend: Array.from({length: 7}, (_, i) => ({
+       time: ['Mon', 'Tue', 'Wed', 'Thu', 'Fri', 'Sat', 'Sun'][i],
+       click: Math.floor(Math.random() * 800) + 800,
+       pay: Math.floor(Math.random() * 300) + 150
+    })),
     products: generateProductList(25)
   },
   organic: {
     funnel: [
-      { value: 12000, name: '访客数 (UV)', fill: '#3b82f6' },
-      { value: 1500, name: '加购人数', fill: '#10b981' },
-      { value: 800, name: '提交订单', fill: '#fbbf24' },
-      { value: 400, name: '支付成功', fill: '#60a5fa' },
+      { value: Math.floor(Math.random() * 3000) + 9000, name: '访客数 (UV)', fill: '#3b82f6' },
+      { value: Math.floor(Math.random() * 500) + 1000, name: '加购人数', fill: '#10b981' },
+      { value: Math.floor(Math.random() * 200) + 600, name: '提交订单', fill: '#fbbf24' },
+      { value: Math.floor(Math.random() * 100) + 300, name: '支付成功', fill: '#60a5fa' },
     ],
-    trend: [
-      { time: 'Mon', click: 2000, pay: 100 },
-      { time: 'Tue', click: 2100, pay: 120 },
-      { time: 'Wed', click: 1900, pay: 90 },
-      { time: 'Thu', click: 2300, pay: 150 },
-      { time: 'Fri', click: 2500, pay: 180 },
-      { time: 'Sat', click: 2800, pay: 200 },
-      { time: 'Sun', click: 2600, pay: 190 },
-    ],
+    trend: Array.from({length: 7}, (_, i) => ({
+       time: ['Mon', 'Tue', 'Wed', 'Thu', 'Fri', 'Sat', 'Sun'][i],
+       click: Math.floor(Math.random() * 1500) + 1500,
+       pay: Math.floor(Math.random() * 100) + 50
+    })),
     products: generateProductList(25)
   }
-};
+});
 
 // --- SHARED COMPONENTS ---
 
@@ -142,14 +141,8 @@ const Pagination = ({ current, total, pageSize, onChange }: { current: number, t
   const totalPages = Math.ceil(total / pageSize);
   if (totalPages <= 1) return null;
 
-  // Generate page numbers array
   const getPageNumbers = () => {
     const pages = [];
-    // Limit to showing 7 pages max for simplicity in this demo, 
-    // or just show all if total is small.
-    // For this specific request "1, 2, 3, 4, 5", we render the full list if under 8, 
-    // otherwise we might need a more complex sliding window.
-    // Given our mock data size, just showing all is cleaner.
     for (let i = 1; i <= totalPages; i++) {
       pages.push(i);
     }
@@ -240,29 +233,63 @@ const MetricCard = ({ title, value, subValue, trend, isActive, onClick, color = 
   );
 };
 
-const SectionHeader = ({ title, filters = ['今日', '本周', '本月'] }: { title: string, filters?: string[] }) => (
-  <div className="flex items-center justify-between mb-4">
-    <h2 className="text-lg font-bold text-slate-800">{title}</h2>
-    <div className="flex items-center gap-2 text-sm">
-      {filters.map((f, i) => (
-        <button key={f} className={`px-3 py-1 rounded-md transition-colors ${i === 0 ? 'bg-white shadow-sm text-brand-600 font-medium' : 'text-slate-500 hover:text-slate-800'}`}>
-          {f}
-        </button>
-      ))}
-      <div className="flex items-center gap-2 bg-white border border-slate-200 rounded-md px-2 py-1 ml-2 text-slate-500">
-        <CalendarIcon />
-        <span className="text-xs">2023-10-02 ~ 2023-10-10</span>
+const SectionHeader = ({ title, filters = ['今日', '本周', '本月'], onDateChange }: { title: string, filters?: string[], onDateChange?: () => void }) => {
+  const [startDate, setStartDate] = useState('2023-10-02');
+  const [endDate, setEndDate] = useState('2023-10-10');
+
+  const handleDateChange = (type: 'start' | 'end', val: string) => {
+    if (type === 'start') setStartDate(val);
+    else setEndDate(val);
+    if (onDateChange) onDateChange();
+  };
+
+  return (
+    <div className="flex items-center justify-between mb-4">
+      <h2 className="text-lg font-bold text-slate-800 truncate mr-2">{title}</h2>
+      <div className="flex items-center gap-1.5 text-sm shrink-0">
+        {filters.map((f, i) => (
+          <button key={f} className={`px-2 py-1 rounded-md transition-colors text-xs md:text-sm ${i === 0 ? 'bg-white shadow-sm text-brand-600 font-medium' : 'text-slate-500 hover:text-slate-800'}`}>
+            {f}
+          </button>
+        ))}
+        <div className="flex items-center gap-1 bg-white border border-slate-200 rounded-md px-1 py-1 ml-1 text-slate-500 hover:border-brand-300 transition-colors">
+          <CalendarIcon />
+          <div className="flex items-center text-xs gap-0.5">
+             <input 
+               type="date" 
+               value={startDate}
+               onChange={(e) => handleDateChange('start', e.target.value)}
+               className="bg-transparent border-none outline-none text-slate-600 p-0 cursor-pointer font-medium w-[85px] text-[11px]"
+             />
+             <span className="text-slate-400">~</span>
+             <input 
+               type="date" 
+               value={endDate}
+               onChange={(e) => handleDateChange('end', e.target.value)}
+               className="bg-transparent border-none outline-none text-slate-600 p-0 cursor-pointer font-medium w-[85px] text-[11px]"
+             />
+          </div>
+        </div>
       </div>
     </div>
-  </div>
-);
+  );
+};
 
 const SalesOverview = () => {
   const [activeMetric, setActiveMetric] = useState(0);
+  const [chartData, setChartData] = useState(generateOverviewData(0));
+
+  useEffect(() => {
+    setChartData(generateOverviewData(activeMetric));
+  }, [activeMetric]);
+
+  const handleDataRefresh = () => {
+    setChartData(generateOverviewData(activeMetric));
+  };
 
   return (
     <div className="bg-white p-6 rounded-2xl shadow-sm border border-slate-100 mb-6">
-      <SectionHeader title="数据概览" />
+      <SectionHeader title="数据概览" onDateChange={handleDataRefresh} />
       <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-5 gap-4 mb-6">
         <MetricCard title="总销售额 (GMV)" value="¥ 126,560" subValue="124,569" trend={12} isActive={activeMetric === 0} onClick={() => setActiveMetric(0)} />
         <MetricCard title="访客数 (UV)" value="8,560" subValue="6,850" trend={-5} isActive={activeMetric === 1} onClick={() => setActiveMetric(1)} />
@@ -270,13 +297,13 @@ const SalesOverview = () => {
         <MetricCard title="支付转化率" value="14.5%" subValue="13.2%" trend={1.3} isActive={activeMetric === 3} onClick={() => setActiveMetric(3)} />
         <MetricCard title="退款率" value="3.2%" subValue="4.1%" trend={-0.9} isActive={activeMetric === 4} onClick={() => setActiveMetric(4)} />
       </div>
-      <div className="h-[300px] w-full bg-slate-50 rounded-xl p-4 relative">
-        <div className="absolute top-4 left-4 z-10 flex gap-4 text-xs">
+      <div className="h-[420px] w-full bg-slate-50 rounded-xl p-4 relative">
+        <div className="absolute top-4 right-4 z-10 flex gap-4 text-xs">
            <div className="flex items-center gap-1"><span className="w-2 h-2 rounded-full bg-brand-500"></span>今日数据</div>
            <div className="flex items-center gap-1"><span className="w-2 h-2 rounded-full bg-sky-200"></span>昨日数据</div>
         </div>
         <ResponsiveContainer width="100%" height="100%">
-          <AreaChart data={OVERVIEW_DATA} margin={{ top: 20, right: 30, left: 0, bottom: 0 }}>
+          <AreaChart data={chartData} margin={{ top: 20, right: 30, left: 0, bottom: 0 }}>
             <defs>
               <linearGradient id="colorToday" x1="0" y1="0" x2="0" y2="1">
                 <stop offset="5%" stopColor="#3b82f6" stopOpacity={0.1}/>
@@ -299,12 +326,16 @@ const SalesOverview = () => {
   );
 };
 
-// Updated: Growth Factors with Trend Charts and Pagination
 const GrowthFactors = () => {
   const [activeTab, setActiveTab] = useState<'wechat' | 'community' | 'organic'>('wechat');
   const [viewMode, setViewMode] = useState<'funnel' | 'trend'>('funnel');
   const [page, setPage] = useState(1);
   const pageSize = 5;
+  const [channelData, setChannelData] = useState(generateChannelData());
+
+  const handleDataRefresh = () => {
+    setChannelData(generateChannelData());
+  };
 
   const tabs = [
     { id: 'wechat', name: '企业微信渠道', value: '¥ 65,165', trend: '+12%', percent: 40 },
@@ -312,20 +343,17 @@ const GrowthFactors = () => {
     { id: 'organic', name: '自然搜索流量', value: '¥ 19,095', trend: '-2%', percent: 15 },
   ] as const;
 
-  const currentData = CHANNEL_DATA[activeTab];
+  const currentData = channelData[activeTab];
   
-  // Reset page on tab change
   useEffect(() => {
     setPage(1);
-    // Optional: Reset view mode
-    // setViewMode('funnel'); 
   }, [activeTab]);
 
   const pagedProducts = currentData.products.slice((page - 1) * pageSize, page * pageSize);
 
   return (
     <div className="bg-white p-6 rounded-2xl shadow-sm border border-slate-100 mb-6">
-      <SectionHeader title="销售增长因子" />
+      <SectionHeader title="销售增长因子" onDateChange={handleDataRefresh} />
       <div className="grid grid-cols-1 md:grid-cols-3 gap-4 mb-6">
         {tabs.map((tab) => (
           <div 
@@ -354,7 +382,6 @@ const GrowthFactors = () => {
       </div>
       
       <div className="grid grid-cols-1 lg:grid-cols-2 gap-8 animate-fadeIn">
-        {/* Left Column: Funnel or Trend */}
         <div className="h-[340px] flex flex-col">
           <div className="flex justify-between items-center mb-4">
              <h3 className="text-sm font-bold text-slate-700">{tabs.find(t=>t.id === activeTab)?.name} - 转化分析</h3>
@@ -400,7 +427,6 @@ const GrowthFactors = () => {
           </div>
         </div>
 
-        {/* Right Column: Product List with Pagination */}
         <div className="h-[340px] flex flex-col">
           <div className="flex justify-between items-center mb-4">
              <h3 className="text-sm font-bold text-slate-700">该渠道核心商品贡献</h3>
@@ -436,14 +462,19 @@ const GrowthFactors = () => {
 const RefundAnalysis = () => {
   const [page, setPage] = useState(1);
   const pageSize = 5;
-  // Generate a longer list for pagination demo
-  const [products] = useState(() => generateProductList(25));
+  const [products, setProducts] = useState(() => generateProductList(25));
+  const [chartData, setChartData] = useState(generateOverviewData(0));
   
+  const handleDataRefresh = () => {
+    setProducts(generateProductList(25));
+    setChartData(generateOverviewData(0));
+  };
+
   const pagedProducts = products.slice((page - 1) * pageSize, page * pageSize);
 
   return (
     <div className="bg-white p-6 rounded-2xl shadow-sm border border-slate-100 mb-6">
-      <SectionHeader title="售后与退款分析" />
+      <SectionHeader title="售后与退款分析" onDateChange={handleDataRefresh} />
       <div className="grid grid-cols-1 md:grid-cols-2 gap-4 mb-6">
          <div className="p-4 bg-slate-50 rounded-xl relative overflow-hidden">
             <div className="relative z-10">
@@ -453,7 +484,7 @@ const RefundAnalysis = () => {
             </div>
             <div className="absolute right-0 bottom-0 w-1/2 h-16 opacity-50">
                <ResponsiveContainer width="100%" height="100%">
-                 <AreaChart data={OVERVIEW_DATA}>
+                 <AreaChart data={chartData}>
                    <Area type="monotone" dataKey="today" stroke="#8b5cf6" fill="#c4b5fd" />
                  </AreaChart>
                </ResponsiveContainer>
@@ -467,7 +498,7 @@ const RefundAnalysis = () => {
             </div>
             <div className="absolute right-0 bottom-0 w-1/2 h-16 opacity-50">
                <ResponsiveContainer width="100%" height="100%">
-                 <AreaChart data={OVERVIEW_DATA}>
+                 <AreaChart data={chartData}>
                    <Area type="monotone" dataKey="today" stroke="#8b5cf6" fill="#c4b5fd" />
                  </AreaChart>
                </ResponsiveContainer>
@@ -722,14 +753,14 @@ const AIAgent = () => {
 };
 
 // Reusable Product Table Component with Pagination
-const ProductTable = ({ title, products, type }: { title: string, products: Product[], type: 'top' | 'rising' }) => {
+const ProductTable = ({ title, products, type, onDateChange }: { title: string, products: Product[], type: 'top' | 'rising', onDateChange?: () => void }) => {
   const [page, setPage] = useState(1);
   const pageSize = 5;
   const pagedData = products.slice((page - 1) * pageSize, page * pageSize);
 
   return (
      <div className="border border-slate-200 rounded-xl p-5 flex flex-col h-full bg-slate-50/50">
-       <SectionHeader title={title} />
+       <SectionHeader title={title} onDateChange={onDateChange} />
        <div className="flex-1 overflow-auto no-scrollbar">
          <table className="w-full text-sm">
            <thead className="text-slate-500 text-xs bg-slate-50 border-b border-slate-100">
@@ -760,19 +791,18 @@ const ProductTable = ({ title, products, type }: { title: string, products: Prod
 export default function App() {
   const [activeCategory, setActiveCategory] = useState(0);
   const [currentBarData, setCurrentBarData] = useState(getSubCategoryData(0));
-  // Generate different mock data sets for tables based on active category
-  // In a real app, you would fetch data. Here we simulate it by using a ref or effect,
-  // but for simplicity, we just generate random lists when category changes.
   
-  // To avoid regeneration on every render, we can use useMemo dependent on activeCategory, 
-  // but getRandomProduct is non-deterministic. Let's just create state.
-  const [topProducts, setTopProducts] = useState(generateProductList(50)); // Increased to 50 for more pages
-  const [risingProducts, setRisingProducts] = useState(generateProductList(50)); // Increased to 50 for more pages
+  const [topProducts, setTopProducts] = useState(generateProductList(50));
+  const [risingProducts, setRisingProducts] = useState(generateProductList(50));
 
   const handleCategoryChange = (index: number) => {
     setActiveCategory(index);
     setCurrentBarData(getSubCategoryData(index));
-    // Simulate data refresh
+    setTopProducts(generateProductList(50));
+    setRisingProducts(generateProductList(50));
+  };
+
+  const handleProductRefresh = () => {
     setTopProducts(generateProductList(50));
     setRisingProducts(generateProductList(50));
   };
@@ -791,7 +821,7 @@ export default function App() {
             
             {/* Category Analysis Section */}
             <div className="bg-white p-6 rounded-2xl shadow-sm border border-slate-100">
-              <SectionHeader title="品类与库存分析" />
+              <SectionHeader title="品类与库存分析" onDateChange={handleProductRefresh} />
               <div className="flex gap-4 overflow-x-auto pb-4 mb-4 no-scrollbar">
                 {categories.map((cat, i) => (
                   <div 
@@ -834,8 +864,18 @@ export default function App() {
                {/* Moved Product Tables here as requested */}
                <div className="mt-8 pt-8 border-t border-slate-100">
                   <div className="grid grid-cols-1 lg:grid-cols-2 gap-6 h-[420px]">
-                     <ProductTable title="热销商品" products={topProducts} type="top" />
-                     <ProductTable title="飙升商品" products={risingProducts} type="rising" />
+                     <ProductTable 
+                        title="热销商品" 
+                        products={topProducts} 
+                        type="top" 
+                        onDateChange={() => setTopProducts(generateProductList(50))} 
+                     />
+                     <ProductTable 
+                        title="飙升商品" 
+                        products={risingProducts} 
+                        type="rising" 
+                        onDateChange={() => setRisingProducts(generateProductList(50))} 
+                     />
                   </div>
                </div>
             </div>
