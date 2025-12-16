@@ -14,12 +14,16 @@ const PRODUCT_NAMES = [
   "特级新疆纯牛奶 200ml*12", "智利进口车厘子 JJ级", "东北五常大米 5kg", "维达超韧抽纸 4层", 
   "蓝月亮深层洁净洗衣液", "三只松鼠每日坚果", "海南贵妃芒 5斤装", "农夫山泉饮用天然水", 
   "蒙牛纯甄酸牛奶", "金龙鱼1:1:1调和油", "云南白药牙膏", "奥利奥夹心饼干", 
-  "百事可乐无糖 330ml", "卫龙大面筋辣条", "帮宝适一级帮纸尿裤"
+  "百事可乐无糖 330ml", "卫龙大面筋辣条", "帮宝适一级帮纸尿裤",
+  "可口可乐 330ml*6", "康师傅红烧牛肉面", "海天生抽酱油 500ml", "清风卷纸 3层*10",
+  "舒肤佳沐浴露 柠檬味", "高露洁牙刷 软毛", "立白洗洁精 1.5kg", "雀巢速溶咖啡 1+2",
+  "百草味夏威夷果", "良品铺子芒果干", "旺旺雪饼", "乐事薯片 原味", "好丽友派",
+  "伊利安慕希希腊酸奶", "王老吉凉茶"
 ];
 
 const getRandomProduct = (index: number): Product => ({
   rank: index + 1,
-  name: PRODUCT_NAMES[Math.floor(Math.random() * PRODUCT_NAMES.length)],
+  name: PRODUCT_NAMES[index % PRODUCT_NAMES.length] + (index > 14 ? ` (批次${Math.floor(index/15)})` : ""),
   orders: Math.floor(Math.random() * 5000) + 500,
   gmv: parseFloat((Math.random() * 20000 + 1000).toFixed(2)),
   trend: Math.random() > 0.4 ? 'up' : 'down'
@@ -92,7 +96,7 @@ const CHANNEL_DATA = {
       { time: 'Sat', click: 2200, pay: 800 },
       { time: 'Sun', click: 2000, pay: 750 },
     ],
-    products: generateProductList(15) // Increased for pagination
+    products: generateProductList(25) // Increased to show more pages
   },
   community: {
     funnel: [
@@ -110,7 +114,7 @@ const CHANNEL_DATA = {
       { time: 'Sat', click: 1500, pay: 500 },
       { time: 'Sun', click: 1400, pay: 480 },
     ],
-    products: generateProductList(15)
+    products: generateProductList(25)
   },
   organic: {
     funnel: [
@@ -128,7 +132,7 @@ const CHANNEL_DATA = {
       { time: 'Sat', click: 2800, pay: 200 },
       { time: 'Sun', click: 2600, pay: 190 },
     ],
-    products: generateProductList(15)
+    products: generateProductList(25)
   }
 };
 
@@ -136,22 +140,54 @@ const CHANNEL_DATA = {
 
 const Pagination = ({ current, total, pageSize, onChange }: { current: number, total: number, pageSize: number, onChange: (p: number) => void }) => {
   const totalPages = Math.ceil(total / pageSize);
+  if (totalPages <= 1) return null;
+
+  // Generate page numbers array
+  const getPageNumbers = () => {
+    const pages = [];
+    // Limit to showing 7 pages max for simplicity in this demo, 
+    // or just show all if total is small.
+    // For this specific request "1, 2, 3, 4, 5", we render the full list if under 8, 
+    // otherwise we might need a more complex sliding window.
+    // Given our mock data size, just showing all is cleaner.
+    for (let i = 1; i <= totalPages; i++) {
+      pages.push(i);
+    }
+    return pages;
+  };
+
   return (
     <div className="flex justify-end items-center gap-2 mt-4 select-none">
        <button 
         disabled={current === 1} 
         onClick={() => onChange(current - 1)} 
-        className="px-2 py-1 text-xs border border-slate-200 rounded text-slate-500 hover:bg-slate-50 disabled:opacity-50 disabled:cursor-not-allowed"
+        className="w-8 h-8 flex items-center justify-center rounded-lg border border-slate-200 text-slate-500 hover:bg-slate-50 hover:text-brand-600 disabled:opacity-50 disabled:cursor-not-allowed transition-all"
        >
-         上一页
+         &lt;
        </button>
-       <span className="text-xs text-slate-500">{current} / {totalPages}</span>
+       
+       <div className="flex items-center gap-1">
+         {getPageNumbers().map(p => (
+           <button
+              key={p}
+              onClick={() => onChange(p)}
+              className={`w-8 h-8 flex items-center justify-center rounded-lg text-xs font-bold transition-all ${
+                current === p 
+                  ? 'bg-brand-600 text-white shadow-md shadow-brand-200' 
+                  : 'text-slate-600 hover:bg-slate-100'
+              }`}
+           >
+             {p}
+           </button>
+         ))}
+       </div>
+
        <button 
         disabled={current === totalPages} 
         onClick={() => onChange(current + 1)} 
-        className="px-2 py-1 text-xs border border-slate-200 rounded text-slate-500 hover:bg-slate-50 disabled:opacity-50 disabled:cursor-not-allowed"
+        className="w-8 h-8 flex items-center justify-center rounded-lg border border-slate-200 text-slate-500 hover:bg-slate-50 hover:text-brand-600 disabled:opacity-50 disabled:cursor-not-allowed transition-all"
        >
-         下一页
+         &gt;
        </button>
     </div>
   );
@@ -401,7 +437,7 @@ const RefundAnalysis = () => {
   const [page, setPage] = useState(1);
   const pageSize = 5;
   // Generate a longer list for pagination demo
-  const [products] = useState(() => generateProductList(15));
+  const [products] = useState(() => generateProductList(25));
   
   const pagedProducts = products.slice((page - 1) * pageSize, page * pageSize);
 
@@ -688,11 +724,11 @@ const AIAgent = () => {
 // Reusable Product Table Component with Pagination
 const ProductTable = ({ title, products, type }: { title: string, products: Product[], type: 'top' | 'rising' }) => {
   const [page, setPage] = useState(1);
-  const pageSize = 10;
+  const pageSize = 5;
   const pagedData = products.slice((page - 1) * pageSize, page * pageSize);
 
   return (
-     <div className="bg-white p-6 rounded-2xl shadow-sm border border-slate-100 flex flex-col h-full">
+     <div className="border border-slate-200 rounded-xl p-5 flex flex-col h-full bg-slate-50/50">
        <SectionHeader title={title} />
        <div className="flex-1 overflow-auto no-scrollbar">
          <table className="w-full text-sm">
@@ -730,15 +766,15 @@ export default function App() {
   
   // To avoid regeneration on every render, we can use useMemo dependent on activeCategory, 
   // but getRandomProduct is non-deterministic. Let's just create state.
-  const [topProducts, setTopProducts] = useState(generateProductList(30));
-  const [risingProducts, setRisingProducts] = useState(generateProductList(30));
+  const [topProducts, setTopProducts] = useState(generateProductList(50)); // Increased to 50 for more pages
+  const [risingProducts, setRisingProducts] = useState(generateProductList(50)); // Increased to 50 for more pages
 
   const handleCategoryChange = (index: number) => {
     setActiveCategory(index);
     setCurrentBarData(getSubCategoryData(index));
     // Simulate data refresh
-    setTopProducts(generateProductList(30));
-    setRisingProducts(generateProductList(30));
+    setTopProducts(generateProductList(50));
+    setRisingProducts(generateProductList(50));
   };
 
   const categories = ['粮油调味', '生鲜水果', '休闲零食', '肉禽蛋品', '乳饮酒水', '速冻食品'];
@@ -749,12 +785,12 @@ export default function App() {
       <div className="flex relative">
         {/* Main BI Content */}
         <main className="flex-1 p-6 lg:pr-[400px]">
-          <div className="max-w-6xl mx-auto space-y-6">
+          <div className="max-w-6xl mx-auto space-y-10"> {/* Changed from space-y-6 to space-y-10 */}
             <SalesOverview />
             <GrowthFactors />
             
             {/* Category Analysis Section */}
-            <div className="bg-white p-6 rounded-2xl shadow-sm border border-slate-100 mb-6">
+            <div className="bg-white p-6 rounded-2xl shadow-sm border border-slate-100">
               <SectionHeader title="品类与库存分析" />
               <div className="flex gap-4 overflow-x-auto pb-4 mb-4 no-scrollbar">
                 {categories.map((cat, i) => (
@@ -794,12 +830,14 @@ export default function App() {
                   </BarChart>
                 </ResponsiveContainer>
               </div>
-            </div>
 
-            {/* Product Tables filtered by Category */}
-            <div className="grid grid-cols-1 lg:grid-cols-2 gap-6 h-[500px] mb-8">
-               <ProductTable title="热销商品榜" products={topProducts} type="top" />
-               <ProductTable title="飙升商品榜" products={risingProducts} type="rising" />
+               {/* Moved Product Tables here as requested */}
+               <div className="mt-8 pt-8 border-t border-slate-100">
+                  <div className="grid grid-cols-1 lg:grid-cols-2 gap-6 h-[420px]">
+                     <ProductTable title="热销商品" products={topProducts} type="top" />
+                     <ProductTable title="飙升商品" products={risingProducts} type="rising" />
+                  </div>
+               </div>
             </div>
 
             <RefundAnalysis />
