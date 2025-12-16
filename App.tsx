@@ -421,8 +421,12 @@ const GrowthFactors = () => {
               <ResponsiveContainer width="100%" height="100%">
                 <FunnelChart>
                   <Tooltip formatter={(value, name) => [value, name]} />
-                  <Funnel dataKey="value" data={currentData.funnel} isAnimationActive={true}>
-                    <LabelList position="right" fill="#000" stroke="none" dataKey="name" />
+                  <Funnel 
+                    dataKey="value" 
+                    data={currentData.funnel.map(item => ({ ...item, displayLabel: `${item.name} ${item.value.toLocaleString()}` }))} 
+                    isAnimationActive={true}
+                  >
+                    <LabelList position="right" fill="#4b5563" stroke="none" dataKey="displayLabel" fontSize={12} />
                   </Funnel>
                 </FunnelChart>
               </ResponsiveContainer>
