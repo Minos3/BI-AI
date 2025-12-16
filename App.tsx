@@ -259,14 +259,18 @@ const SectionHeader = ({ title, filters = ['今日', '本周', '本月'], onDate
                type="date" 
                value={startDate}
                onChange={(e) => handleDateChange('start', e.target.value)}
-               className="bg-transparent border-none outline-none text-slate-600 p-0 cursor-pointer font-medium w-[85px] text-[11px]"
+               onClick={(e) => e.currentTarget.showPicker()}
+               style={{ colorScheme: 'light' }}
+               className="bg-transparent border-none outline-none text-slate-600 p-0 cursor-pointer font-medium w-[79px] text-[11px]"
              />
              <span className="text-slate-400">~</span>
              <input 
                type="date" 
                value={endDate}
                onChange={(e) => handleDateChange('end', e.target.value)}
-               className="bg-transparent border-none outline-none text-slate-600 p-0 cursor-pointer font-medium w-[85px] text-[11px]"
+               onClick={(e) => e.currentTarget.showPicker()}
+               style={{ colorScheme: 'light' }}
+               className="bg-transparent border-none outline-none text-slate-600 p-0 cursor-pointer font-medium w-[79px] text-[11px]"
              />
           </div>
         </div>
